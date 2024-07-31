@@ -67,8 +67,6 @@ def main():
         }}
     </style>
     """, unsafe_allow_html=True)
-  
-
      # Add the image and title at the top of the page
     col1, col2, col3 = st.columns([1,2,3])
     with col1:
@@ -86,17 +84,13 @@ def main():
     left_logo, center, right_logo = st.columns([1, 2, 1])
     center.image("ref.jpg", width=650)
     #right_logo.image("image.jpg", width=250)
-
 if __name__ == "__main__":
     main()
-
 # Load the trained model
 model_file = "rf_model.pkl"  # Ensure this path is correct
 model = joblib.load(model_file)
-
 if 'current_seq_idx' not in st.session_state:
     st.session_state.current_seq_idx = 0
-
 def ddr(input_seq):
     input_file = 'input_seq.txt'
     output_file = 'output_ddr.csv'
@@ -107,7 +101,6 @@ def ddr(input_seq):
     os.remove(input_file)
     os.remove(output_file)
     return df
-
 def dpc(input_seq):
     input_file = 'input_seq.txt'
     output_file = 'output_dpc.csv'
@@ -118,13 +111,11 @@ def dpc(input_seq):
     os.remove(input_file)
     os.remove(output_file)
     return df
-
 def is_valid_sequence(sequence):
     valid_amino_acids = 'ACDEFGHIKLMNPQRSTVWY'
     if not sequence or not all(char.upper() in valid_amino_acids for char in sequence):
         raise ValueError("You have entered an invalid sequence. Please check your input.")
     return True
-
 def update(sequence_list):
     pdb_strings = []
     for sequence in sequence_list:
@@ -145,8 +136,43 @@ def update(sequence_list):
         else:
             st.error(f"Error with sequence {sequence}: Status code {response.status_code}")
     return pdb_strings
+# 3D Structure Prediction Functions
+def render_mol(pdb):
+    if not pdb.strip():
+        st.error("Empty PDB data, cannot render.")
+        return
+    pdbview = py3Dmol.view()
+    pdbview.addModel(pdb, 'pdb')
+    pdbview.setStyle({'cartoon': {'color': 'spectrum'}})
+    pdbview.setBackgroundColor('white')
+    pdbview.zoomTo()
+    pdbview.zoom(2, 800)
+    pdbview.spin(True)
+    showmol(pdbview, height=500, width=800)
+def show_next():
+    if 'pdb_strings' in st.session_state:
+        st.session_state.current_seq_idx = (st.session_state.current_seq_idx + 1) % len(st.session_state.pdb_strings)
+        render_current_structure()
+def show_previous():
+    if 'pdb_strings' in st.session_state:
+        st.session_state.current_seq_idx = (st.session_state.current_seq_idx - 1) % len(st.session_state.pdb_strings)
+        render_current_structure()
+def render_current_structure():
+    if 'pdb_strings' in st.session_state and st.session_state.pdb_strings:
+        current_pdb = st.session_state.pdb_strings[st.session_state.current_seq_idx]
+        with structure_container:
+            # Displaying the index of the current structure
+            st.markdown(f"**Displaying Structure {st.session_state.current_seq_idx + 1} of {len(st.session_state.pdb_strings)}**")
 
+            render_mol(current_pdb)
 
+            # Adding a download button for the current structure
+            st.download_button(
+                label="Download this Structure",
+                data=current_pdb,
+                file_name=f"structure_{st.session_state.current_seq_idx + 1}.pdb",
+                mime='chemical/x-pdb'
+            )
 # Function to parse FASTA format
 def parse_fasta(file_content):
     sequences = []
@@ -161,8 +187,6 @@ def parse_fasta(file_content):
     if current_sequence:
         sequences.append(current_sequence)
     return sequences
-
-
 def predict_peptide_structure(sequences):
     ddr_df_list = [ddr(seq) for seq in sequences if seq]
     dpc_df_list = [dpc(seq) for seq in sequences if seq]
@@ -264,26 +288,44 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+ 
+# Define columns for the profiles
+col1, col2, col3 = st.columns([1, 1, 1])
 
+with col1:
+    # st.image("my-photo.jpg", width=100)
+    st.markdown("""
+        <div style='line-height: 1.1;'>
+            <h3>Dr. Kashif Iqbal Sahibzada</h3>
+             Assistant Professor | Department of Health Professional Technologies, Faculty of Allied Health Sciences, The University of Lahore<br>
+            Post-Doctoral Fellow | Henan University of Technology,Zhengzhou China<br>
+            Email: kashif.iqbal@dhpt.uol.edu.pk | kashif.iqbal@haut.edu.cn
+        </div>
+    """, unsafe_allow_html=True)
 
-row1, row2 = st.columns([1, 1])
-row3 = st.columns(1)
+with col2:
+    # st.image("colleague-photo.jpg", width=100)
+    st.markdown("""
+        <div style='line-height: 1.1;'>
+            <h3>Dr. Rizwan Abid</h3>
+            PhD Biochemistry<br>
+            School of Biochemistry and Biotechnology<br>
+            University of the Punjab, Lahore<br>
+            Email: rizwan.phd.ibb@pu.edu.pk
+        </div>
+    """, unsafe_allow_html=True)
 
-with row1:
-    st.write("")
-    st.write("### Dr. Kashif Iqbal Sahibzada")
-    #st.write("Assistant Professor")
-    st.write("Assistant Professor | Department of Health Professional Technologies, Faculty of Allied Health Sciences, The University of Lahore")
-    st.write("Post-Doctoral Fellow | Henan University of Technology,Zhengzhou China ")
-    st.write("Email: kashif.iqbal@dhpt.uol.edu.pk | kashif.iqbal@haut.edu.cn")
-with row2:
- st.write("")
- st.write("### Rizwan Abid")
- st.write("PhD Scholar")
- st.write("School of Biochemistry and Biotechnology")
- st.write("University of the Punjab, Lahore")
- st.write("Email: rizwan.phd.ibb@pu.edu.pk")  
-
+with col3:
+    # st.image("teacher-photo.jpg", width=100)
+    st.markdown("""
+        <div style='line-height: 1.1;'>
+            <h3>Shumaila Shahid</h3>
+            MS Biochemistry<br>
+            School of Biochemistry and Biotechnology<br>
+            University of the Punjab, Lahore<br>
+            Email: shumaila.ms.sbb@pu.edu.pk
+        </div>
+    """, unsafe_allow_html=True)
 
 #Add University Logo
 left_logo, center_left, center_right, right_logo = st.columns([1, 1, 1, 1])
